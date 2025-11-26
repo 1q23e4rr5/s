@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل کاربری - سامانه پیام‌رسانی</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-top: 20px;
+        }
+        .user-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .message-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .message-item {
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: white;
+        }
+        .message-item.unread {
+            border-left: 4px solid #667eea;
+            background: #f8f9ff;
+        }
+        .sender-name {
+            color: #667eea;
+            font-weight: bold;
+        }
+        .message-time {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="user-info">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h4>خوش آمدید، {{ name }}!</h4>
+                    <p class="mb-0">شناسه کاربری شما: <strong>{{ user_id }}</strong></p>
+                    <small>این شناسه را در اختیار دوستان خود قرار دهید تا بتوانند برای شما پیام ارسال کنند</small>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ url_for('send_message') }}" class="btn btn-light me-2">
+                        <i class="fas fa-paper-plane"></i> ارسال پیام جدید
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-light">
+                        <i class="fas fa-sign-out-alt"></i> خروج
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-container">
+            <div class="row">
+                <!-- پیام‌های دریافتی -->
+                <div class="col-md-6">
+                    <div class="message-section">
+                        <h5 class="mb-3">
+                            <i class="fas fa-inbox me-2"></i>پیام‌های دریافتی
+                            {% if received_messages %}
+                            <span class="badge bg-primary">{{ received_messages|length }}</span>
+                            {% endif %}
+                        </h5>
+                        
+                        {% if received_messages %}
+                            {% for message in received_messages %}
+                            <div class="message-item {% if not message.read %}unread{% endif %}">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <span class="sender-name">
+                                            <i class="fas fa-user me-1"></i>از: {{ message.sender_name }}
+                                        </span>
+                                        <small class="text-muted">({{ message.sender_id }})</small>
+                                    </div>
+                                    <small class="message-time">{{ message.timestamp.strftime('%Y/%m/%d %H:%M') }}</small>
+                                </div>
+                                <p class="mb-2">{{ message.message }}</p>
+                                {% if not message.read %}
+                                <small class="text-success"><i class="fas fa-circle me-1"></i>جدید</small>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-inbox fa-2x text-muted mb-3"></i>
+                                <p class="text-muted">هیچ پیامی دریافت نکرده‌اید</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- پیام‌های ارسالی -->
+                <div class="col-md-6">
+                    <div class="message-section">
+                        <h5 class="mb-3">
+                            <i class="fas fa-paper-plane me-2"></i>پیام‌های ارسالی
+                            {% if sent_messages %}
+                            <span class="badge bg-success">{{ sent_messages|length }}</span>
+                            {% endif %}
+                        </h5>
+                        
+                        {% if sent_messages %}
+                            {% for message in sent_messages %}
+                            <div class="message-item">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <span class="text-success">
+                                            <i class="fas fa-user me-1"></i>به: {{ message.receiver_id }}
+                                        </span>
+                                    </div>
+                                    <small class="message-time">{{ message.timestamp.strftime('%Y/%m/%d %H:%M') }}</small>
+                                </div>
+                                <p class="mb-2">{{ message.message }}</p>
+                                <small class="text-info">ارسال شده توسط شما</small>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-paper-plane fa-2x text-muted mb-3"></i>
+                                <p class="text-muted">هنوز پیامی ارسال نکرده‌اید</p>
+                                <a href="{{ url_for('send_message') }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-paper-plane me-1"></i>ارسال اولین پیام
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // آپدیت خودکار پیام‌های جدید هر 10 ثانیه
+        function checkNewMessages() {
+            fetch('/get_new_messages')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.messages && data.messages.length > 0) {
+                        location.reload(); // رفرش صفحه برای نمایش پیام‌های جدید
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        
+        // بررسی پیام‌های جدید هر 10 ثانیه
+        setInterval(checkNewMessages, 10000);
+    </script>
+</body>
+</html>
